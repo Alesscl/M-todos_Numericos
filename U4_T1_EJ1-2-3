@@ -1,0 +1,102 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+
+# 1. Definición de esquemas de Diferencias Finitas
+def forward_diff(f, x, h):
+    return (f(x + h) - f(x)) / h
+
+def backward_diff(f, x, h):
+    return (f(x) - f(x - h)) / h
+
+def central_diff(f, x, h):
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+# Función para calcular errores
+def calcular_errores(exacta, aprox):
+    err_abs = np.abs(exacta - aprox)
+    # Evitar división por cero en error relativo
+    err_rel = np.where(exacta != 0, err_abs / np.abs(exacta), 0)
+    err_cuad = (exacta - aprox)**2
+    return err_abs, err_rel, err_cuad
+
+# Función principal para ejecutar los ejercicios
+def resolver_ejercicio(f, df_exacta, a, b, h, titulo, nombre_archivo):
+    # Definir x según el paso h solicitado
+    x_vals = np.arange(a, b + h, h)
+    
+    # Cálculos
+    exact = df_exacta(x_vals)
+    forward = forward_diff(f, x_vals, h)
+    backward = backward_diff(f, x_vals, h)
+    central = central_diff(f, x_vals, h)
+    
+    # Errores
+    e_abs_f, e_rel_f, e_cuad_f = calcular_errores(exact, forward)
+    e_abs_b, e_rel_b, e_cuad_b = calcular_errores(exact, backward)
+    e_abs_c, e_rel_c, e_cuad_c = calcular_errores(exact, central)
+    
+    # Crear Tabla Resumen (primeras 5 filas para el informe)
+    data = {
+        'x': x_vals,
+        'Exacta': exact,
+        'Centrada': central,
+        'Err Abs Centrada': e_abs_c
+    }
+    df_tabla = pd.DataFrame(data)
+    print(f"\n--- Tabla Resumen: {titulo} ---")
+    print(df_tabla.head())
+    
+    # Gráfica de Derivadas
+    plt.figure(figsize=(12, 5))
+    plt.subplot(1, 2, 1)
+    plt.plot(x_vals, exact, 'k', lw=2, label='Analítica')
+    plt.plot(x_vals, forward, 'r--', alpha=0.7, label='Adelante')
+    plt.plot(x_vals, backward, 'g-.', alpha=0.7, label='Atrás')
+    plt.plot(x_vals, central, 'b:', lw=2, label='Centrada')
+    plt.title(f"Aproximación: {titulo}")
+    plt.legend()
+    plt.grid(True)
+
+    # Gráfica de Errores (Escala Logarítmica para mejor visualización)
+    plt.subplot(1, 2, 2)
+    plt.plot(x_vals, e_abs_f, 'r--', label='Err Adelante')
+    plt.plot(x_vals, e_abs_b, 'g-.', label='Err Atrás')
+    plt.plot(x_vals, e_abs_c, 'b-', label='Err Centrada')
+    plt.yscale('log')
+    plt.title(f"Evolución del Error Absoluto")
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(f"{nombre_archivo}.png")
+    plt.show()
+
+# --- EJECUCIÓN DE EJERCICIOS ---
+
+# Ejercicio 1: sin(x)
+resolver_ejercicio(
+    f = lambda x: np.sin(x),
+    df_exacta = lambda x: np.cos(x),
+    a = 0, b = np.pi, h = 0.1,
+    titulo = "f(x) = sin(x)",
+    nombre_archivo = "ejercicio_1"
+)
+
+# Ejercicio 2: e^x
+resolver_ejercicio(
+    f = lambda x: np.exp(x),
+    df_exacta = lambda x: np.exp(x),
+    a = 0, b = 2, h = 0.05,
+    titulo = "f(x) = e^x",
+    nombre_archivo = "ejercicio_2"
+)
+
+# Ejercicio 3: x^3 - 2x^2 + x
+resolver_ejercicio(
+    f = lambda x: x**3 - 2*x**2 + x,
+    df_exacta = lambda x: 3*x**2 - 4*x + 1,
+    a = -1, b = 2, h = 0.2,
+    titulo = "f(x) = x³ - 2x² + x",
+    nombre_archivo = "ejercicio_3"
+)
